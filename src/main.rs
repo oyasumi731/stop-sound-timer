@@ -1,7 +1,4 @@
-mod app;
-mod components;
-
-use app::App;
+use stop_sound_timer_ui::App;
 
 fn main() {
     // ロガーの初期化

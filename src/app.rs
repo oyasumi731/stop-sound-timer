@@ -1,30 +1,29 @@
-use chrono::NaiveTime;
+use chrono::Duration;
 use yew::prelude::*;
 
-use crate::components::{Timer, TitleBar};
+use crate::components::{Timer, TimerSetting, TitleBar};
+use crate::utils::naive_time_from_zero;
 
 #[function_component(App)]
 pub fn app() -> Html {
-    let timer_input_ref = use_node_ref();
-    let timer_setting = use_state(|| NaiveTime::parse_from_str("00:00:00", "%H:%M:%S").unwrap());
+    let timer = use_state(|| naive_time_from_zero());
 
-    // タイマー開始ボタンのコールバック
-    let start_onclick = {
-        let timer_input_ref = timer_input_ref.clone();
-        let timer_setting = timer_setting.clone();
-        Callback::from(move |_| {
-            // タイマーの設定値を取得
-            let new_timer_input = timer_input_ref
-                .cast::<web_sys::HtmlInputElement>()
-                .unwrap()
-                .value();
+    let set_timer = {
+        let timer = timer.clone();
+        use_callback(
+            move |naive_time, _| {
+                timer.set(naive_time);
+            },
+            (),
+        )
+    };
 
-            // 設定値の文字列をNaiveTimeにパース
-            let naive_time =
-                NaiveTime::parse_from_str(&(String::from("00:") + &new_timer_input), "%H:%M:%S")
-                    .unwrap();
-            timer_setting.set(naive_time);
-        })
+    let decrement_timer = {
+        let timer = timer.clone();
+        use_callback(
+            move |duration: Duration, timer| timer.set(*timer.clone() - duration),
+            timer,
+        )
     };
 
     html! {
@@ -32,11 +31,10 @@ pub fn app() -> Html {
             <TitleBar />
             <main class="container">
                 <p>{"Until the sound stops :"}</p>
-                <Timer time={*timer_setting} />
-
+                <Timer  timer={*timer}
+                        on_decrement_timer={decrement_timer} />
                 <p>
-                    <input type="time" ref={timer_input_ref} value="00:00" />
-                    <button onclick={start_onclick}> {"Start"} </button>
+                    <TimerSetting on_set_timer={set_timer} />
                 </p>
             </main>
         </>
